@@ -33,11 +33,11 @@ import javax.swing.text.DefaultCaret;
  * *abstract class*, which means you'll need to extend it in your own program.
  * For a simple example of how to do this, have a look at the SquaresExample
  * class.
- * 
+ *
  * This GUI uses Swing, not the first-year UI library. Swing is not the focus of
  * this course, but it would be to your benefit if you took some time to
  * understand how this class works.
- * 
+ *
  * @author tony
  */
 public abstract class GUI {
@@ -81,7 +81,7 @@ public abstract class GUI {
 	 * data files from. File objects representing the four files of interested
 	 * are passed to the method. The fourth File, polygons, might be null if it
 	 * isn't present in the directory.
-	 * 
+	 *
 	 * @param nodes
 	 *            a File for nodeID-lat-lon.tab
 	 * @param roads

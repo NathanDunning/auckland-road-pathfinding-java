@@ -9,7 +9,7 @@ import java.util.Set;
  * Node represents an intersection in the road graph. It stores its ID and its
  * location, as well as all the segments that it connects to. It knows how to
  * draw itself, and has an informative toString method.
- * 
+ *
  * @author tony
  */
 public class Node {
@@ -17,6 +17,8 @@ public class Node {
 	public final int nodeID;
 	public final Location location;
 	public final Collection<Segment> segments;
+	public boolean isVisited = false;
+	public Node previous = null;
 
 	public Node(int nodeID, double lat, double lon) {
 		this.nodeID = nodeID;
@@ -26,6 +28,18 @@ public class Node {
 
 	public void addSegment(Segment seg) {
 		segments.add(seg);
+	}
+
+	public void setVisited() {
+		isVisited = true;
+	}
+
+	public void setPrevious(Node node) {
+		this.previous = node;
+	}
+
+	public Collection<Segment> getSegments(){
+		return this.segments;
 	}
 
 	public void draw(Graphics g, Dimension area, Location origin, double scale) {

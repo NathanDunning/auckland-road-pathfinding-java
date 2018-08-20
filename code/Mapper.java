@@ -6,12 +6,15 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.*;
 
 /**
  * This is the main class for the mapping program. It extends the GUI abstract
  * class and implements all the methods necessary, as well as having a main
  * function.
- * 
+ *
  * @author tony
  */
 public class Mapper extends GUI {
@@ -166,6 +169,46 @@ public class Mapper extends GUI {
 		int dy = (int) ((area.height - (area.height * zoom)) / 2);
 
 		origin = Location.newFromPoint(new Point(dx, dy), origin, scale);
+	}
+
+	public List<Node> aStarSearch(Node from, Node to){
+		double heuristicCost = from.location.distance(to.location);
+
+		//Creating a priority queue and adding the first element
+		PriorityQueue<AStarNode> fringe = new PriorityQueue<AStarNode>((a,b) -> ((int) (a.getMinCostToNext()-b.getMinCostToNext())));
+		fringe.offer(new AStarNode(from, null, 0, heuristicCost));
+		AStarNode currentNode = null;
+
+		//Iterating through the while loop
+		while(!fringe.isEmpty()) {
+			currentNode = fringe.poll();
+			Node current = currentNode.getCurrent();
+			Node previous = currentNode.getPrevious();
+			double g = currentNode.getCostFromStart();
+			double f = currentNode.getMinCostToNext();
+			if(!current.isVisited) {
+				//Set current node to visited and set its previous to the previous
+				current.setVisited();
+				current.setPrevious(previous);
+				if(currentNode.getCurrent().equals(to)) {break;}
+				//Iterate through current node to find the length of edge and children nodes
+				for(Segment s : current.segments) {
+					//Finding the start and the end (assigning them correctly)
+					Node start, end;
+					double length = s.length;
+					if(s.end.equals(current)) {start = s.end; end = s.start;}
+					else {start = s.start; end = s.end;}
+
+					//Checking that our children (end nodes) are unvisited, finding new 'g' and 'f'
+					if(!end.isVisited) {
+						double gNew = g + length;
+						double fNew = gNew + end.location.distance(to.location);
+						fringe.offer(new AStarNode(end, start, gNew, fNew));
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	public static void main(String[] args) {

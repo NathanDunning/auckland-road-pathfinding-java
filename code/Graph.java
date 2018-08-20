@@ -12,7 +12,7 @@ import java.util.Map;
  * This represents the data structure storing all the roads, nodes, and
  * segments, as well as some information on which nodes and segments should be
  * highlighted.
- * 
+ *
  * @author tony
  */
 public class Graph {
@@ -27,9 +27,9 @@ public class Graph {
 	Collection<Road> highlightedRoads = new HashSet<>();
 
 	public Graph(File nodes, File roads, File segments, File polygons) {
-		this.nodes = Parser.parseNodes(nodes, this);
-		this.roads = Parser.parseRoads(roads, this);
-		this.segments = Parser.parseSegments(segments, this);
+		this.nodes = ParserStream.parseNodes(nodes, this);
+		this.roads = ParserStream.parseRoads(roads, this);
+		this.segments = ParserStream.parseSegments(segments, this);
 	}
 
 	public void draw(Graphics g, Dimension screen, Location origin, double scale) {
