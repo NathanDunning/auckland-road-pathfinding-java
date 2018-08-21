@@ -171,7 +171,7 @@ public class Mapper extends GUI {
 		origin = Location.newFromPoint(new Point(dx, dy), origin, scale);
 	}
 
-	public List<Node> aStarSearch(Node from, Node to){
+	public Set<Segment> aStarSearch(Node from, Node to){
 		double heuristicCost = from.location.distance(to.location);
 
 		//Creating a priority queue and adding the first element
@@ -207,6 +207,11 @@ public class Mapper extends GUI {
 					}
 				}
 			}
+		}
+		//Adding all the previous to a list
+		HashSet<Segment> shortest = new HashSet<Segment>();
+		for(Node s = currentNode.getPrevious(); s.previous != null; s = s.previous) {
+			
 		}
 		return null;
 	}
