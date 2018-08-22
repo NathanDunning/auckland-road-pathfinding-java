@@ -6,8 +6,7 @@ public class AStarNode implements Comparable<AStarNode> {
 	private Node previous;
 	private double costFromStart;
 	private double minCostToDest;
-	private Segment seg;
-	
+
 	public AStarNode(Node current, Node previous, double g, double f) {
 		this.current = current;
 		this.previous = previous;

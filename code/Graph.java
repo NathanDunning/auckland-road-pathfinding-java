@@ -25,6 +25,7 @@ public class Graph {
 
 	Node highlightedNode;
 	Collection<Road> highlightedRoads = new HashSet<>();
+	Collection<Segment> highlightedSegs;
 
 	public Graph(File nodes, File roads, File segments, File polygons) {
 		this.nodes = ParserStream.parseNodes(nodes, this);
@@ -41,14 +42,22 @@ public class Graph {
 
 		// draw all the segments.
 		g2.setColor(Mapper.SEGMENT_COLOUR);
-		for (Segment s : segments)
+		for (Segment s : segments) {
 			s.draw(g2, origin, scale);
+		}
 
 		// draw the segments of all highlighted roads.
 		g2.setColor(Mapper.HIGHLIGHT_COLOUR);
 		g2.setStroke(new BasicStroke(3));
 		for (Road road : highlightedRoads) {
 			for (Segment seg : road.components) {
+				seg.draw(g2, origin, scale);
+			}
+		}
+
+		//Draw the highlighted segments from the A* search
+		if (highlightedSegs != null) {
+			for(Segment seg : highlightedSegs) {
 				seg.draw(g2, origin, scale);
 			}
 		}
@@ -71,6 +80,10 @@ public class Graph {
 
 	public void setHighlight(Collection<Road> roads) {
 		this.highlightedRoads = roads;
+	}
+
+	public void setHighlightSegs(Collection<Segment> segments) {
+		this.highlightedSegs = segments;
 	}
 }
 

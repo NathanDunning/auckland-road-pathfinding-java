@@ -38,7 +38,12 @@ public class Mapper extends GUI {
 	// how far away from a node you can click before it isn't counted.
 	public static final double MAX_CLICKED_DISTANCE = 0.15;
 
+	//Different clicks for A* Search
+	private boolean click2 = false;
+	Node firstNode, secondNode;
+
 	// these two define the 'view' of the program, ie. where you're looking and
+
 	// how zoomed in you are.
 	private Location origin;
 	private double scale;
@@ -56,22 +61,55 @@ public class Mapper extends GUI {
 	@Override
 	protected void onClick(MouseEvent e) {
 		Location clicked = Location.newFromPoint(e.getPoint(), origin, scale);
+
 		// find the closest node.
 		double bestDist = Double.MAX_VALUE;
-		Node closest = null;
-
 		for (Node node : graph.nodes.values()) {
 			double distance = clicked.distance(node.location);
 			if (distance < bestDist) {
 				bestDist = distance;
-				closest = node;
+				if(click2 == false) {
+					firstNode = node;
+				}
+				else {
+					secondNode = node;
+				}
 			}
 		}
 
-		// if it's close enough, highlight it and show some information.
-		if (clicked.distance(closest.location) < MAX_CLICKED_DISTANCE) {
-			graph.setHighlight(closest);
-			getTextOutputArea().setText(closest.toString());
+		//If it is their first mouse click work with firstNode
+		if (!click2) {
+			//Highlight firstNode and show info
+			if (clicked.distance(firstNode.location) < MAX_CLICKED_DISTANCE) {
+				//Remove highlight of previous segments
+				graph.setHighlightSegs(null);
+				//Highlight node
+				graph.setHighlight(firstNode);
+				getTextOutputArea().setText(firstNode.toString());
+				click2 = true;
+				return;
+			}
+		}
+		//If it is the second click use secondNode
+		else {
+			//Highlight firstNode and show info
+			if (clicked.distance(secondNode.location) < MAX_CLICKED_DISTANCE) {
+				//Remove highlight of previous segments
+				graph.setHighlightSegs(null);
+				//Highlight node
+				graph.setHighlight(secondNode);
+				getTextOutputArea().setText(secondNode.toString());
+			}
+			//Call the aStarSearch and highlight the segments
+			Set<Segment> shortest = aStarSearch(firstNode, secondNode);
+			graph.setHighlightSegs(shortest);
+			//Print out the road names
+			for(Segment s : shortest) {
+				getTextOutputArea().setText(s.road.name);
+			}
+			//Reset the nodes and click boolean back to use for the next set of clicks
+			firstNode = secondNode = null;
+			click2 = false;
 		}
 	}
 
@@ -178,7 +216,6 @@ public class Mapper extends GUI {
 		PriorityQueue<AStarNode> fringe = new PriorityQueue<AStarNode>((a,b) -> ((int) (a.getMinCostToNext()-b.getMinCostToNext())));
 		fringe.offer(new AStarNode(from, null, 0, heuristicCost));
 		AStarNode currentNode = null;
-
 		//Iterating through the while loop
 		while(!fringe.isEmpty()) {
 			currentNode = fringe.poll();
@@ -210,10 +247,27 @@ public class Mapper extends GUI {
 		}
 		//Adding all the previous to a list
 		HashSet<Segment> shortest = new HashSet<Segment>();
-		for(Node s = currentNode.getPrevious(); s.previous != null; s = s.previous) {
-			
+		for(Node backtrack = currentNode.getPrevious(); backtrack.previous != null; backtrack = backtrack.previous) {
+			for(Segment s : backtrack.segments) {
+				//If our set is empty then we can use the currentNode values
+				if (shortest.isEmpty()) {
+					//Checking to see if the start equals the end or vice versa (ensure correct segment)
+					if(s.start.equals(currentNode.getPrevious()) && s.end.equals(currentNode.getCurrent())) {
+						shortest.add(s);
+					}
+					else if(s.start.equals(currentNode.getCurrent()) && s.start.equals(currentNode.getPrevious())) {
+						shortest.add(s);
+					}
+				}
+				if(s.start.equals(backtrack) && (s.end.equals(backtrack.previous))) {
+					shortest.add(s);
+				}
+				else if(s.start.equals(backtrack.previous) && (s.end.equals(backtrack))) {
+					shortest.add(s);
+				}
+			}
 		}
-		return null;
+		return shortest;
 	}
 
 	public static void main(String[] args) {
