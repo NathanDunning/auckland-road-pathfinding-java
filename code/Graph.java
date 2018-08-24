@@ -78,6 +78,10 @@ public class Graph {
 		this.highlightedNode = node;
 	}
 
+	public void clearHighlight() {
+		this.highlightedNode = null;
+	}
+
 	public void setHighlight(Collection<Road> roads) {
 		this.highlightedRoads = roads;
 	}

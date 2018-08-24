@@ -38,7 +38,7 @@ public class Mapper extends GUI {
 	// how far away from a node you can click before it isn't counted.
 	public static final double MAX_CLICKED_DISTANCE = 0.15;
 
-	//Different clicks for A* Search
+	// Different clicks for A* Search
 	private boolean click2 = false;
 	Node firstNode, secondNode;
 
@@ -68,46 +68,45 @@ public class Mapper extends GUI {
 			double distance = clicked.distance(node.location);
 			if (distance < bestDist) {
 				bestDist = distance;
-				if(click2 == false) {
+				if (click2 == false) {
 					firstNode = node;
-				}
-				else {
+				} else {
 					secondNode = node;
 				}
 			}
 		}
 
-		//If it is their first mouse click work with firstNode
+		// If it is their first mouse click work with firstNode
 		if (!click2) {
-			//Highlight firstNode and show info
+			// Highlight firstNode and show info
 			if (clicked.distance(firstNode.location) < MAX_CLICKED_DISTANCE) {
-				//Remove highlight of previous segments
+				// Remove highlight of previous segments
 				graph.setHighlightSegs(null);
-				//Highlight node
+				// Highlight node
 				graph.setHighlight(firstNode);
 				getTextOutputArea().setText(firstNode.toString());
 				click2 = true;
 				return;
 			}
 		}
-		//If it is the second click use secondNode
+		// If it is the second click use secondNode
 		else {
-			//Highlight firstNode and show info
+			// Highlight firstNode and show info
 			if (clicked.distance(secondNode.location) < MAX_CLICKED_DISTANCE) {
-				//Remove highlight of previous segments
-				graph.setHighlightSegs(null);
-				//Highlight node
-				graph.setHighlight(secondNode);
+				// Highlight node
+				graph.clearHighlight();
 				getTextOutputArea().setText(secondNode.toString());
 			}
-			//Call the aStarSearch and highlight the segments
-			Set<Segment> shortest = aStarSearch(firstNode, secondNode);
-			graph.setHighlightSegs(shortest);
-			//Print out the road names
-			for(Segment s : shortest) {
-				getTextOutputArea().setText(s.road.name);
+			// Call the aStarSearch and highlight the segments
+			if (!firstNode.equals(secondNode)) {
+				Set<Segment> shortest = aStarSearch(firstNode, secondNode);
+				graph.setHighlightSegs(shortest);
+				// Print out the road names
+				for (Segment s : shortest) {
+					getTextOutputArea().setText(s.road.name);
+				}
 			}
-			//Reset the nodes and click boolean back to use for the next set of clicks
+			// Reset the nodes and click boolean back to use for the next set of clicks
 			firstNode = secondNode = null;
 			click2 = false;
 		}
@@ -193,11 +192,11 @@ public class Mapper extends GUI {
 	}
 
 	/**
-	 * This method does the nasty logic of making sure we always zoom into/out
-	 * of the centre of the screen. It assumes that scale has just been updated
-	 * to be either scale * ZOOM_FACTOR (zooming in) or scale / ZOOM_FACTOR
-	 * (zooming out). The passed boolean should correspond to this, ie. be true
-	 * if the scale was just increased.
+	 * This method does the nasty logic of making sure we always zoom into/out of
+	 * the centre of the screen. It assumes that scale has just been updated to be
+	 * either scale * ZOOM_FACTOR (zooming in) or scale / ZOOM_FACTOR (zooming out).
+	 * The passed boolean should correspond to this, ie. be true if the scale was
+	 * just increased.
 	 */
 	private void scaleOrigin(boolean zoomIn) {
 		Dimension area = getDrawingAreaDimension();
@@ -209,35 +208,44 @@ public class Mapper extends GUI {
 		origin = Location.newFromPoint(new Point(dx, dy), origin, scale);
 	}
 
-	public Set<Segment> aStarSearch(Node from, Node to){
+	public Set<Segment> aStarSearch(Node from, Node to) {
 		double heuristicCost = from.location.distance(to.location);
-
-		//Creating a priority queue and adding the first element
-		PriorityQueue<AStarNode> fringe = new PriorityQueue<AStarNode>((a,b) -> ((int) (a.getMinCostToNext()-b.getMinCostToNext())));
+		Set<Node> visitedNodes = new HashSet<Node>();
+		// Creating a priority queue and adding the first element
+		PriorityQueue<AStarNode> fringe = new PriorityQueue<AStarNode>(
+				(a, b) -> ((int) (a.getMinCostToNext() - b.getMinCostToNext())));
 		fringe.offer(new AStarNode(from, null, 0, heuristicCost));
 		AStarNode currentNode = null;
-		//Iterating through the while loop
-		while(!fringe.isEmpty()) {
+		// Iterating through the while loop
+		while (!fringe.isEmpty()) {
 			currentNode = fringe.poll();
 			Node current = currentNode.getCurrent();
 			Node previous = currentNode.getPrevious();
 			double g = currentNode.getCostFromStart();
 			double f = currentNode.getMinCostToNext();
-			if(!current.isVisited) {
-				//Set current node to visited and set its previous to the previous
+			if (!current.isVisited) {
+				// Set current node to visited and set its previous to the previous
 				current.setVisited();
+				visitedNodes.add(current);
 				current.setPrevious(previous);
-				if(currentNode.getCurrent().equals(to)) {break;}
-				//Iterate through current node to find the length of edge and children nodes
-				for(Segment s : current.segments) {
-					//Finding the start and the end (assigning them correctly)
+				if (currentNode.getCurrent().equals(to)) {
+					break;
+				}
+				// Iterate through current node to find the length of edge and children nodes
+				for (Segment s : current.segments) {
+					// Finding the start and the end (assigning them correctly)
 					Node start, end;
 					double length = s.length;
-					if(s.end.equals(current)) {start = s.end; end = s.start;}
-					else {start = s.start; end = s.end;}
+					if (s.end.equals(current)) {
+						start = s.end;
+						end = s.start;
+					} else {
+						start = s.start;
+						end = s.end;
+					}
 
-					//Checking that our children (end nodes) are unvisited, finding new 'g' and 'f'
-					if(!end.isVisited) {
+					// Checking that our children (end nodes) are unvisited, finding new 'g' and 'f'
+					if (!end.isVisited) {
 						double gNew = g + length;
 						double fNew = gNew + end.location.distance(to.location);
 						fringe.offer(new AStarNode(end, start, gNew, fNew));
@@ -245,28 +253,23 @@ public class Mapper extends GUI {
 				}
 			}
 		}
-		//Adding all the previous to a list
+		// Adding all the previous to a list
 		HashSet<Segment> shortest = new HashSet<Segment>();
-		for(Node backtrack = currentNode.getPrevious(); backtrack.previous != null; backtrack = backtrack.previous) {
-			for(Segment s : backtrack.segments) {
-				//If our set is empty then we can use the currentNode values
-				if (shortest.isEmpty()) {
-					//Checking to see if the start equals the end or vice versa (ensure correct segment)
-					if(s.start.equals(currentNode.getPrevious()) && s.end.equals(currentNode.getCurrent())) {
-						shortest.add(s);
-					}
-					else if(s.start.equals(currentNode.getCurrent()) && s.start.equals(currentNode.getPrevious())) {
-						shortest.add(s);
-					}
-				}
-				if(s.start.equals(backtrack) && (s.end.equals(backtrack.previous))) {
+		for (Node backtrack = currentNode.getCurrent(); backtrack.previous != null; backtrack = backtrack.previous) {
+			for (Segment s : backtrack.segments) {
+				//Add our segments into our set so we can highlight them
+				if (s.start.equals(backtrack) && (s.end.equals(backtrack.previous))) {
 					shortest.add(s);
-				}
-				else if(s.start.equals(backtrack.previous) && (s.end.equals(backtrack))) {
+				} else if (s.start.equals(backtrack.previous) && (s.end.equals(backtrack))) {
 					shortest.add(s);
 				}
 			}
 		}
+		//Set all of our visited nodes to unvisited for the next set of clicks
+		for(Node n : visitedNodes) {
+			n.isVisited = false;
+		}
+
 		return shortest;
 	}
 
