@@ -228,7 +228,7 @@ public class Mapper extends GUI {
 				current.setVisited();
 				visitedNodes.add(current);
 				current.setPrevious(previous);
-				if (currentNode.getCurrent().equals(to)) {
+				if (current.equals(to)) {
 					break;
 				}
 				// Iterate through current node to find the length of edge and children nodes

@@ -1,0 +1,39 @@
+Report:
+
+A* Search Algorithm Pseudocode:
+
+Create a fringe that is a PriorityQueue<AStarNode> (comparing the 'f');
+Create a list of visited nodes;
+add default AStarNode;
+while (fringe is not empty){
+	aStarNode  = fringe.poll();
+	currentNode = get the current node from the aStarNode;
+	previousNode = get the previous node from the aStarNode;
+	if (currentNode is not visited){
+		set it to visited;
+		add it to visited nodes;
+		set the currentNode's previous field to previousNode;
+		if (currentNode == destination node){
+			break;
+		}
+
+		for (Segments = currentNode.segments){
+			find the start and end nodes of the segment;
+			if (end node is not visited){
+				calculate new g value;
+				calculate new f value;
+				add it to the fringe;
+			}
+		}
+	}
+}
+
+Create a new collection of segments;
+for(currentNode in aStarNode; if it's previous != null; set it to its previous){
+	for(Segement in currentNode.segments){
+		add each segment into the collection and keep traversing through the 'previous' field of the nodes;
+	}
+}
+
+Set all the visited nodes to unvisited;
+Return the collection of segments;
