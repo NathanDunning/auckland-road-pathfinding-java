@@ -52,6 +52,9 @@ public class Mapper extends GUI {
 	private Graph graph;
 	private Trie trie;
 
+	// Articuation Points
+	Set<Node> artPoints = new HashSet<Node>();
+
 	@Override
 	protected void redraw(Graphics g) {
 		if (graph != null)
@@ -235,7 +238,6 @@ public class Mapper extends GUI {
 				for (Segment s : current.segments) {
 					// Finding the start and the end (assigning them correctly)
 					Node start, end;
-					double length = s.length;
 					if (s.end.equals(current)) {
 						start = s.end;
 						end = s.start;
@@ -246,7 +248,7 @@ public class Mapper extends GUI {
 
 					// Checking that our children (end nodes) are unvisited, finding new 'g' and 'f'
 					if (!end.isVisited) {
-						double gNew = g + length;
+						double gNew = g + s.length;
 						double fNew = gNew + end.location.distance(to.location);
 						fringe.offer(new AStarNode(end, start, gNew, fNew));
 					}
@@ -271,6 +273,40 @@ public class Mapper extends GUI {
 		}
 
 		return shortest;
+	}
+
+	public void APSearch(Node node) {
+		node.count = 0;
+		int numSubTrees = 0;
+
+		for(Node n : node.neighbours) {
+			if(n.count == Integer.MAX_VALUE) {
+				iterArtPts(n, 1, node);
+				numSubTrees++;
+			}
+		}
+
+		if(numSubTrees > 1) {
+			artPoints.add(node);
+		}
+	}
+
+	public void iterArtPts(Node firstNode, int count, Node root) {
+		Deque<APoint> APStack = new ArrayDeque<APoint>();
+		APStack.push(new APoint(firstNode, count, root));
+
+		while(!APStack.isEmpty()) {
+			APoint currentAP = APStack.peek();
+			Node n = currentAP.firstNode;
+			if(n.count == Integer.MAX_VALUE) {
+				n.count = count;
+				n.reachBack = count;
+				//TODO Create field for children in node?
+				//TODO Add all neighbours of n into children except for the parent
+			}
+
+		}
+
 	}
 
 	public static void main(String[] args) {
