@@ -10,6 +10,7 @@ import java.util.HashSet;
  */
 public class Road {
 	public final int roadID;
+	public boolean oneWay;
 	public final String name, city;
 	public final Collection<Segment> components;
 
@@ -19,6 +20,8 @@ public class Road {
 		this.roadID = roadID;
 		this.city = city;
 		this.name = label;
+		if(oneway == 1) {oneWay = true;}
+		else {oneWay = false;}
 		this.components = new HashSet<Segment>();
 	}
 

@@ -4,10 +4,6 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.PriorityQueue;
 import java.util.*;
 
 /**
@@ -52,9 +48,6 @@ public class Mapper extends GUI {
 	private Graph graph;
 	private Trie trie;
 
-	// Articuation Points
-	Set<Node> artPoints = new HashSet<Node>();
-
 	@Override
 	protected void redraw(Graphics g) {
 		if (graph != null)
@@ -98,16 +91,15 @@ public class Mapper extends GUI {
 			if (clicked.distance(secondNode.location) < MAX_CLICKED_DISTANCE) {
 				// Highlight node
 				graph.clearHighlight();
-				getTextOutputArea().setText(secondNode.toString());
 			}
 			// Call the aStarSearch and highlight the segments
 			if (!firstNode.equals(secondNode)) {
 				Set<Segment> shortest = aStarSearch(firstNode, secondNode);
 				graph.setHighlightSegs(shortest);
 				// Print out the road names
-				for (Segment s : shortest) {
+/*				for (Segment s : shortest) {
 					getTextOutputArea().setText(s.road.name);
-				}
+				}*/
 			}
 			// Reset the nodes and click boolean back to use for the next set of clicks
 			firstNode = secondNode = null;
@@ -192,6 +184,13 @@ public class Mapper extends GUI {
 		trie = new Trie(graph.roads.values());
 		origin = new Location(-250, 250); // close enough
 		scale = 1;
+		// Articulation Points
+
+		for (Node n : graph.nodes.values()) {
+			n.generateNeighbours();
+			this.APSearch(n);
+		}
+		System.out.println("Articulation Points = " + graph.artPoints.size());
 	}
 
 	/**
@@ -214,6 +213,7 @@ public class Mapper extends GUI {
 	public Set<Segment> aStarSearch(Node from, Node to) {
 		double heuristicCost = from.location.distance(to.location);
 		Set<Node> visitedNodes = new HashSet<Node>();
+		Set<Road> path = new HashSet<Road>();
 		// Creating a priority queue and adding the first element
 		PriorityQueue<AStarNode> fringe = new PriorityQueue<AStarNode>(
 				(a, b) -> ((int) (a.getMinCostToNext() - b.getMinCostToNext())));
@@ -238,12 +238,18 @@ public class Mapper extends GUI {
 				for (Segment s : current.segments) {
 					// Finding the start and the end (assigning them correctly)
 					Node start, end;
-					if (s.end.equals(current)) {
-						start = s.end;
-						end = s.start;
-					} else {
-						start = s.start;
-						end = s.end;
+					if (s.road.oneWay == false) {
+						if (s.end.equals(current)) {
+							start = s.end;
+							end = s.start;
+						} else {
+							start = s.start;
+							end = s.end;
+						}
+					}
+					else {
+							start = s.start;
+							end = s.end;
 					}
 
 					// Checking that our children (end nodes) are unvisited, finding new 'g' and 'f'
@@ -257,21 +263,37 @@ public class Mapper extends GUI {
 		}
 		// Adding all the previous to a list
 		HashSet<Segment> shortest = new HashSet<Segment>();
+		int distance = 0;
 		for (Node backtrack = currentNode.getCurrent(); backtrack.previous != null; backtrack = backtrack.previous) {
 			for (Segment s : backtrack.segments) {
-				//Add our segments into our set so we can highlight them
+				// Add our segments into our set so we can highlight them
 				if (s.start.equals(backtrack) && (s.end.equals(backtrack.previous))) {
 					shortest.add(s);
 				} else if (s.start.equals(backtrack.previous) && (s.end.equals(backtrack))) {
 					shortest.add(s);
 				}
+				distance += s.length;
 			}
 		}
-		//Set all of our visited nodes to unvisited for the next set of clicks
-		for(Node n : visitedNodes) {
+		// Set all of our visited nodes to unvisited for the next set of clicks
+		for (Node n : visitedNodes) {
 			n.isVisited = false;
 		}
-
+		
+		//Combining segments into road
+		String l1 = ("Total Distance = " + distance +"km \n");
+		String l2 = ("Via:\n");
+		String l3 = "";
+		for(Segment s : shortest) {
+			path.add(s.road);
+		}
+		for(Road r : path) {
+			l3 += (r.name + "\n");
+		}
+		
+		//Print to GUI
+		this.getTextOutputArea().setText(l1 + l2 + l3);
+		
 		return shortest;
 	}
 
@@ -279,34 +301,61 @@ public class Mapper extends GUI {
 		node.count = 0;
 		int numSubTrees = 0;
 
-		for(Node n : node.neighbours) {
-			if(n.count == Integer.MAX_VALUE) {
-				iterArtPts(n, 1, node);
-				numSubTrees++;
+		for (Node n : node.neighbours) {
+			if (n != null) {
+				if (n.count == Integer.MAX_VALUE) {
+					iterArtPts(n, 1, node);
+					numSubTrees++;
+				}
 			}
 		}
 
-		if(numSubTrees > 1) {
-			artPoints.add(node);
+		if (numSubTrees > 1) {
+			graph.artPoints.add(node);
 		}
 	}
 
 	public void iterArtPts(Node firstNode, int count, Node root) {
-		Deque<APoint> APStack = new ArrayDeque<APoint>();
-		APStack.push(new APoint(firstNode, count, root));
+		Stack<APoint> APStack = new Stack<APoint>();
+		APStack.push(new APoint(firstNode, count, root)); //Pushing through initial node
 
-		while(!APStack.isEmpty()) {
+		while (!APStack.isEmpty()) {
+			//Using the first element
 			APoint currentAP = APStack.peek();
 			Node n = currentAP.firstNode;
-			if(n.count == Integer.MAX_VALUE) {
-				n.count = count;
-				n.reachBack = count;
-				//TODO Create field for children in node?
-				//TODO Add all neighbours of n into children except for the parent
+			
+			if (n.count == Integer.MAX_VALUE) {	//If unvisited
+				n.count = currentAP.parent.count + 1;
+				n.reachBack = currentAP.parent.count + 1;
+				
+				if (n.neighbours != null) {
+					for (Node node : n.neighbours) {
+						if (!node.equals(root)) {
+							n.children.add(node);
+						}
+					}
+				}
+			} 
+			//Second if
+			else if (!n.children.isEmpty()) {	//Unvisited
+				for (Node child : n.children) {
+					if (child.count < Integer.MAX_VALUE) { //If Visited
+						n.reachBack = Math.min(child.count, n.reachBack);
+					} else {
+						APStack.push(new APoint(child, count + 1, n));
+					}
+					n.children.remove(child);
+				}
+			} else {
+				if (!n.equals(firstNode)) {	//If its not an AP
+					currentAP.parent.reachBack = Math.min(n.reachBack, currentAP.parent.reachBack);
+					if (n.reachBack >= currentAP.parent.count) {
+						graph.artPoints.add(currentAP.parent);
+					}
+				}
+				APStack.pop();
 			}
-
 		}
-
 	}
 
 	public static void main(String[] args) {

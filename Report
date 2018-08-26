@@ -1,5 +1,13 @@
 Report:
 
+My code mostly works from minimum through to core, they have been implemented and worked on but some parts may not be working 100%.
+Occasional bugs occur but nothing major. Upon implementing oneWays, it seems sometimes it doesn't find the right (shortest) path.
+My way of calculating the distance from A to B is I would use the edge length travelled from A + the straight line distance to B.
+This is not the best heuristics function which is why sometimes it may not find the shortest path.
+
+
+
+
 A* Search Algorithm Pseudocode:
 
 Create a fringe that is a PriorityQueue<AStarNode> (comparing the 'f');
@@ -37,3 +45,34 @@ for(currentNode in aStarNode; if it's previous != null; set it to its previous){
 
 Set all the visited nodes to unvisited;
 Return the collection of segments;
+
+
+Articulation Points Pseudocode:
+Run through all the nodes on the graph and...
+if (node is unvisited){
+	create a new stack;
+	push the initial (neighbour, 1, currentNode);
+	
+	while(stack is not empty){
+	peek the first element <n, count, parent>;
+	if(n is unvisited){
+		set its count and reachback to its current depth down (parent's count + 1);
+		add the neighbours to children (leave out parent);
+	}
+	
+else if(n has childrens){
+	go through the children{
+		if the child is visited then set reachback(n) to min(count(child), reachback(n));
+		else push to stack <child, count+1, n>;
+		remove the child that we just worked on;
+	}
+else {
+	if(n does not equal firstNode){
+		reachback(parent) = min(reachback(n), reachback(parent);
+		if(reachBack(n) >= count(parent)){
+			add it to our list or artPoints;
+		}
+	}
+	stack.pop();
+}
+		

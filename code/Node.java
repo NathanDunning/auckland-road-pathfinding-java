@@ -25,6 +25,7 @@ public class Node {
 
 	//AP Fields
 	public ArrayList<Node> neighbours;
+	public ArrayList<Node> children;
 	public int count = Integer.MAX_VALUE;
 	public int reachBack;
 
@@ -33,7 +34,7 @@ public class Node {
 		this.nodeID = nodeID;
 		this.location = Location.newFromLatLon(lat, lon);
 		this.segments = new HashSet<Segment>();
-		this.neighbours = generateNeighbours();
+		this.children = new ArrayList<Node>();
 	}
 
 	public void addSegment(Segment seg) {
@@ -52,7 +53,7 @@ public class Node {
 		return this.segments;
 	}
 
-	public ArrayList<Node> generateNeighbours(){
+	public void generateNeighbours(){
 		ArrayList<Node> neighbours = new ArrayList<Node>();
 		for(Segment s : this.segments) {
 			if(s.start.equals(this)) {
@@ -62,7 +63,7 @@ public class Node {
 				neighbours.add(s.start);
 			}
 		}
-		return neighbours;
+		this.neighbours = neighbours;
 	}
 
 	public void draw(Graphics g, Dimension area, Location origin, double scale) {

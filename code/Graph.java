@@ -1,4 +1,5 @@
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -24,8 +25,9 @@ public class Graph {
 	Collection<Segment> segments;
 
 	Node highlightedNode;
-	Collection<Road> highlightedRoads = new HashSet<>();
+	Collection<Road> highlightedRoads = new HashSet<Road>();
 	Collection<Segment> highlightedSegs;
+	Collection<Node> artPoints = new HashSet<Node>();
 
 	public Graph(File nodes, File roads, File segments, File polygons) {
 		this.nodes = ParserStream.parseNodes(nodes, this);
@@ -71,6 +73,13 @@ public class Graph {
 		if (highlightedNode != null) {
 			g2.setColor(Mapper.HIGHLIGHT_COLOUR);
 			highlightedNode.draw(g2, screen, origin, scale);
+		}
+		
+		if (!artPoints.isEmpty() || artPoints == null) {
+			g2.setColor(Color.GREEN);
+			for(Node n : artPoints) {
+				n.draw(g2, screen, origin, scale);
+			}
 		}
 	}
 
